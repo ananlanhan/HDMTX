@@ -1,0 +1,582 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>儿童HD-MTX临床决策系统</title>
+    <style>
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px;
+            background-color: #f5f5f5;
+            color: #333;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 10px rgba(0,0,0,0.1);
+        }
+        h1 {
+            color: #2c3e50;
+            text-align: center;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #3498db;
+        }
+        .form-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #f9f9f9;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .form-section h2 {
+            color: #2980b9;
+            margin-top: 0;
+        }
+        .form-group {
+            margin-bottom: 15px;
+        }
+        label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        input, select {
+            width: 100%;
+            padding: 8px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        button {
+            background: #3498db;
+            color: white;
+            border: none;
+            padding: 10px 15px;
+            font-size: 16px;
+            border-radius: 4px;
+            cursor: pointer;
+            display: block;
+            margin: 20px auto;
+            width: 100%;
+            max-width: 200px;
+        }
+        button:hover {
+            background: #2980b9;
+        }
+        .results {
+            display: none;
+            margin-top: 20px;
+            padding: 20px;
+            background: #e8f4f8;
+            border-radius: 5px;
+            border-left: 4px solid #3498db;
+        }
+        .urgent {
+            color: #c0392b;
+            font-weight: bold;
+            background: #fdeded;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .recommendation {
+            background: #e8f4f8;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+        .warning {
+            color: #d35400;
+        }
+        .success {
+            color: #27ae60;
+        }
+        .measure {
+            margin-left: 15px;
+        }
+        .sub-section {
+            margin-top: 15px;
+            padding: 10px;
+            background: #f0f9ff;
+            border-radius: 4px;
+        }
+        .back-button {
+            background: #95a5a6;
+        }
+        .back-button:hover {
+            background: #7f8c8d;
+        }
+        .step-result {
+            background: #fffde7;
+            padding: 15px;
+            border-radius: 5px;
+            margin: 15px 0;
+            border-left: 4px solid #fbc02d;
+        }
+        .action-item {
+            margin: 5px 0;
+            padding-left: 15px;
+            position: relative;
+        }
+        .action-item:before {
+            content: "•";
+            position: absolute;
+            left: 0;
+        }
+        .instructions {
+            padding: 15px;
+            background-color: #e1f5fe;
+            border-radius: 5px;
+            margin-bottom: 15px;
+            border-left: 4px solid #03a9f4;
+        }
+        .hydration-info {
+            background-color: #d4edda;
+            padding: 10px;
+            border-radius: 4px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>儿童大剂量甲氨蝶呤(HD-MTX)临床决策系统</h1>
+        
+        <div id="dose-selection" class="form-section">
+            <h2>1. 剂量与危险度评估</h2>
+            <div class="form-group">
+                <label for="dose">请选择甲氨蝶呤输注剂量 (g/m²)</label>
+                <select id="dose">
+                    <option value="3">3 (低危 - LR)</option>
+                    <option value="5">5 (中/高危 - I/HR)</option>
+                </select>
+            </div>
+        </div>
+        
+        <div id="early-monitoring" class="form-section" style="display: none;">
+            <h2>2. 早期血药浓度监测</h2>
+            <div class="form-group">
+                <label for="conc_12_16">12-16小时MTX血药浓度 (μM)</label>
+                <input type="number" id="conc_12_16" min="0" step="0.1" placeholder="请输入浓度值">
+            </div>
+        </div>
+        
+        <div id="bsa-input" class="form-section" style="display: none;">
+            <h2>3. 患者基本信息</h2>
+            <div class="form-group">
+                <label for="bsa">患者体表面积 (m²)</label>
+                <input type="number" id="bsa" min="0.1" step="0.01" placeholder="请输入体表面积">
+            </div>
+        </div>
+        
+        <div id="result-section" style="display: none;"></div>
+        
+        <div id="late-monitoring" class="form-section" style="display: none;">
+            <h2>4. 24小时评估</h2>
+            <div class="form-group">
+                <label for="crea_elevated">24小时血肌酐是否升高?</label>
+                <select id="crea_elevated">
+                    <option value="N">否 (正常)</option>
+                    <option value="Y">是 (升高)</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label for="conc_24">24小时MTX血药浓度 (μM)</label>
+                <input type="number" id="conc_24" min="0" step="0.1" placeholder="请输入浓度值">
+            </div>
+        </div>
+        
+        <button id="next-step-button">下一步</button>
+        <button id="back-button" class="back-button" style="display: none;">返回</button>
+        <button id="restart-button" class="back-button" style="display: none; background: #9e9e9e;">重新开始</button>
+    </div>
+
+    <script>
+        // 全局变量保存患者状态
+        let patientData = {
+            dose: null,
+            riskGroup: null,
+            target: null,
+            conc12_16: null,
+            percentage: null,
+            bsa: null,
+            crea24: null,
+            conc24: null
+        };
+        
+        // DOM元素引用
+        const doseSelection = document.getElementById('dose-selection');
+        const earlyMonitoring = document.getElementById('early-monitoring');
+        const bsaInput = document.getElementById('bsa-input');
+        const lateMonitoring = document.getElementById('late-monitoring');
+        const resultSection = document.getElementById('result-section');
+        const nextButton = document.getElementById('next-step-button');
+        const backButton = document.getElementById('back-button');
+        const restartButton = document.getElementById('restart-button');
+        const conc24Input = document.getElementById('conc_24');
+        
+        let currentStep = 0;
+        
+        // 设置初始状态
+        function resetForm() {
+            patientData = {
+                dose: null,
+                riskGroup: null,
+                target: null,
+                conc12_16: null,
+                percentage: null,
+                bsa: null,
+                crea24: null,
+                conc24: null
+            };
+            
+            doseSelection.style.display = 'block';
+            earlyMonitoring.style.display = 'none';
+            bsaInput.style.display = 'none';
+            lateMonitoring.style.display = 'none';
+            resultSection.style.display = 'none';
+            backButton.style.display = 'none';
+            nextButton.style.display = 'block';
+            nextButton.textContent = '下一步';
+            restartButton.style.display = 'none';
+            conc24Input.disabled = true;
+            
+            // 清空输入值
+            document.getElementById('dose').selectedIndex = 0;
+            document.getElementById('conc_12_16').value = '';
+            document.getElementById('bsa').value = '';
+            document.getElementById('crea_elevated').selectedIndex = 0;
+            document.getElementById('conc_24').value = '';
+        }
+        
+        // 下一步按钮点击事件
+        nextButton.addEventListener('click', function() {
+            switch(currentStep) {
+                case 0: // 剂量选择
+                    handleDoseSelection();
+                    break;
+                case 1: // 12-16小时浓度
+                    handleEarlyMonitoring();
+                    break;
+                case 2: // 体表面积输入
+                    handleBsaInput();
+                    break;
+                case 3: // 24小时肾功能
+                    handleLateMonitoring();
+                    break;
+            }
+        });
+        
+        // 返回按钮点击事件
+        backButton.addEventListener('click', function() {
+            if (currentStep > 0) {
+                currentStep--;
+                updateFormVisibility();
+            }
+        });
+        
+        // 重新开始按钮
+        restartButton.addEventListener('click', resetForm);
+        
+        // 处理剂量选择
+        function handleDoseSelection() {
+            const dose = document.getElementById('dose').value;
+            if (!dose) {
+                alert('请选择输注剂量');
+                return;
+            }
+            
+            // 设置患者数据
+            patientData.dose = dose;
+            patientData.riskGroup = dose === '3' ? 'LR' : 'I/HR';
+            patientData.target = dose === '3' ? 33 : 65;
+            
+            // 进入下一步
+            currentStep = 1;
+            updateFormVisibility();
+        }
+        
+        // 处理早期监测
+        function handleEarlyMonitoring() {
+            const conc12_16 = document.getElementById('conc_12_16').value;
+            if (!conc12_16) {
+                alert('请输入12-16小时浓度值');
+                return;
+            }
+            
+            // 设置患者数据
+            patientData.conc12_16 = parseFloat(conc12_16);
+            patientData.percentage = (patientData.conc12_16 / patientData.target) * 100;
+            
+            // 显示第一步处理结果
+            generateFirstStepResults();
+            resultSection.style.display = 'block';
+            earlyMonitoring.style.display = 'none';
+            
+            // 根据浓度百分比决定后续步骤
+            if (patientData.percentage > 120) {
+                // >120% 需要输入体表面积计算水化速度
+                currentStep = 2;
+                bsaInput.style.display = 'block';
+                nextButton.textContent = '计算水化速度';
+            } else {
+                // ≤120% 不需要额外评估
+                nextButton.textContent = '重新开始';
+                restartButton.style.display = 'inline-block';
+            }
+            
+            backButton.style.display = 'inline-block';
+        }
+        
+        // 处理体表面积输入
+        function handleBsaInput() {
+            const bsa = document.getElementById('bsa').value;
+            if (!bsa || parseFloat(bsa) <= 0) {
+                alert('请输入有效的体表面积值（大于0）');
+                return;
+            }
+            
+            // 设置患者数据
+            patientData.bsa = parseFloat(bsa);
+            
+            // 更新第一步结果，显示水化建议
+            generateHydrationRecommendation();
+            
+            // 进入24小时评估
+            currentStep = 3;
+            lateMonitoring.style.display = 'block';
+            bsaInput.style.display = 'none';
+            nextButton.textContent = '完成评估';
+            
+            // 根据浓度范围启用/禁用MTX浓度输入
+            conc24Input.disabled = (patientData.percentage <= 150);
+        }
+        
+        // 处理24小时评估
+        function handleLateMonitoring() {
+            const crea24 = document.getElementById('crea_elevated').value;
+            
+            // 浓度 >150%时需要检查是否输入了浓度值
+            if (patientData.percentage > 150) {
+                const conc24 = document.getElementById('conc_24').value;
+                if (!conc24) {
+                    alert('浓度 > 150%，必须输入24小时MTX浓度值');
+                    return;
+                }
+                patientData.conc24 = parseFloat(conc24);
+            }
+            
+            // 设置患者数据
+            patientData.crea24 = crea24;
+            
+            // 生成最终解救方案
+            generateRescuePlan();
+            lateMonitoring.style.display = 'none';
+            restartButton.style.display = 'inline-block';
+            nextButton.style.display = 'none';
+        }
+        
+        // 根据当前步骤更新表单显示
+        function updateFormVisibility() {
+            backButton.style.display = 'inline-block';
+            restartButton.style.display = 'none';
+            nextButton.style.display = 'block';
+            
+            switch(currentStep) {
+                case 0:
+                    doseSelection.style.display = 'block';
+                    earlyMonitoring.style.display = 'none';
+                    bsaInput.style.display = 'none';
+                    lateMonitoring.style.display = 'none';
+                    resultSection.style.display = 'none';
+                    backButton.style.display = 'none';
+                    nextButton.textContent = '下一步';
+                    break;
+                case 1:
+                    doseSelection.style.display = 'none';
+                    earlyMonitoring.style.display = 'block';
+                    bsaInput.style.display = 'none';
+                    lateMonitoring.style.display = 'none';
+                    resultSection.style.display = 'none';
+                    nextButton.textContent = '评估浓度';
+                    break;
+                case 2:
+                    doseSelection.style.display = 'none';
+                    earlyMonitoring.style.display = 'none';
+                    bsaInput.style.display = 'block';
+                    lateMonitoring.style.display = 'none';
+                    resultSection.style.display = 'block';
+                    nextButton.textContent = '计算水化速度';
+                    break;
+                case 3:
+                    doseSelection.style.display = 'none';
+                    earlyMonitoring.style.display = 'none';
+                    bsaInput.style.display = 'none';
+                    lateMonitoring.style.display = 'block';
+                    resultSection.style.display = 'block';
+                    nextButton.textContent = '完成评估';
+                    break;
+            }
+        }
+        
+        // 生成第一步处理结果
+        function generateFirstStepResults() {
+            let html = '<div class="step-result">';
+            html += `<h3>第一步处理决策 (12-16小时浓度: ${patientData.conc12_16}μM)</h3>`;
+            html += `<p><strong>目标浓度</strong>: ${patientData.target}μM | 百分比: ${patientData.percentage.toFixed(1)}%</p>`;
+            
+            if (patientData.percentage <= 120) {
+                html += `<div class="success">`;
+                html += `<h4>处理方案: 浓度在正常范围内 (≤120% 目标值)</h4>`;
+                html += '<div class="action-item">继续当前治疗方案</div>';
+                html += '<div class="action-item">维持当前水化速度</div>';
+                html += '<div class="action-item">不需要额外检查肾功能</div>';
+                html += '</div>';
+            } 
+            else if (patientData.percentage <= 150) {
+                html += `<div class="warning">`;
+                html += `<h4>处理方案: 浓度轻度超标 (120-150% 目标值)</h4>`;
+                html += '<div class="action-item">立即增加水化速度20%</div>';
+                html += '<div class="action-item">乙酰唑胺利尿治疗 (5-10 mg/kg)</div>';
+                html += '<div class="action-item">必须在24小时检查肾功能（血肌酐）</div>';
+                html += '</div>';
+            } 
+            else {
+                html += `<div class="urgent">`;
+                html += `<h4>紧急处理方案: 浓度严重超标 (>150% 目标值)</h4>`;
+                html += '<div class="action-item">立即停止MTX输注</div>';
+                html += '<div class="action-item">水化速度增加20%</div>';
+                html += '<div class="action-item">乙酰唑胺利尿治疗 (5-10 mg/kg)</div>';
+                html += '<div class="action-item">必须在24小时检查肾功能（血肌酐）和MTX浓度</div>';
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            resultSection.innerHTML = html;
+        }
+        
+        // 生成水化建议
+        function generateHydrationRecommendation() {
+            let html = '<div class="step-result">';
+            html += `<h3>水化治疗方案 (体表面积: ${patientData.bsa}m²)</h3>`;
+            
+            const hydrationRate = patientData.riskGroup === 'LR' ? 150 : 180;
+            const totalHydration = Math.round(hydrationRate * patientData.bsa);
+            
+            html += `<div class="hydration-info">`;
+            html += `<h4>推荐水化方案</h4>`;
+            html += `<p><strong>目标水化速度</strong>: ${hydrationRate} ml/m²/h</p>`;
+            html += `<p><strong>患者具体值</strong>: ${totalHydration} ml/h (${hydrationRate} × ${patientData.bsa}m²)</p>`;
+            html += '</div>';
+            
+            html += '<div class="action-item">继续乙酰唑胺利尿治疗</div>';
+            
+            if (patientData.percentage > 150) {
+                html += '<div class="action-item">24小时必须检查肾功能（血肌酐）和MTX浓度</div>';
+            } else {
+                html += '<div class="action-item">24小时必须检查肾功能（血肌酐）</div>';
+            }
+            
+            html += '</div>';
+            
+            resultSection.innerHTML = html;
+        }
+        
+        // 生成最终解救方案
+        function generateRescuePlan() {
+            let html = '<div class="step-result">';
+            html += `<h3>综合治疗决策</h3>`;
+            
+            // 显示初始评估部分
+            html += `<div class="recommendation">`;
+            html += `<p><strong>初始评估</strong>: 12-16小时浓度: ${patientData.conc12_16}μM (${patientData.percentage.toFixed(1)}% 目标值)</p>`;
+            
+            if (patientData.bsa) {
+                const hydrationRate = patientData.riskGroup === 'LR' ? 150 : 180;
+                html += `<p><strong>水化方案</strong>: ${hydrationRate} ml/m²/h</p>`;
+            }
+            
+            html += `<p><strong>肾功能评估</strong>: 肌酐 ${patientData.crea24 === 'Y' ? '升高' : '正常'}`;
+            
+            if (patientData.conc24 !== null) {
+                html += ` | 24小时MTX浓度: ${patientData.conc24}μM`;
+            }
+            
+            html += '</p></div>';
+            
+            // 基于浓度范围的处理方案
+            if (patientData.percentage > 150) {
+                // 浓度 >150% 的特殊决策
+                const creaAbnormal = patientData.crea24 === 'Y';
+                const concAbnormal = patientData.conc24 !== null && patientData.conc24 > patientData.target;
+                
+                html += `<div class="${creaAbnormal && concAbnormal ? 'urgent' : 'warning'}">`;
+                html += `<h4>综合治疗方案</h4>`;
+                
+                // 只有肌酐升高且浓度高于目标值，才需要启动CRRT
+                if (creaAbnormal && concAbnormal) {
+                    html += '<div class="action-item">立即启动连续性肾脏替代治疗(CRRT)</div>';
+                    html += '<div class="action-item">立即启动血浆置换(PE)</div>';
+                    html += '<div class="action-item">立即开始高剂量亚叶酸钙解救(30mg/m²)</div>';
+                } 
+                // 其他异常情况（肌酐升高或浓度高于目标值）只需要提前解救
+                else if (creaAbnormal || concAbnormal) {
+                    html += '<div class="action-item">提前到36小时开始亚叶酸钙解救</div>';
+                    html += '<div class="action-item">亚叶酸钙剂量: 30mg/m²</div>';
+                    html += '<div class="action-item">在44小时监测MTX浓度</div>';
+                } 
+                // 两者都正常的情况
+                else {
+                    html += '<div class="action-item">提前到36小时开始亚叶酸钙解救</div>';
+                    html += '<div class="action-item">亚叶酸钙剂量: 15mg/m²</div>';
+                    html += '<div class="action-item">在44小时监测MTX浓度</div>';
+                }
+                
+                html += '</div>';
+            } 
+            else if (patientData.percentage > 120) {
+                // 120-150% 范围的处理方案
+                const creaAbnormal = patientData.crea24 === 'Y';
+                
+                html += `<div class="${creaAbnormal ? 'warning' : 'success'}">`;
+                html += `<h4>${creaAbnormal ? '加强治疗方案' : '标准解救方案'}</h4>`;
+                
+                // 根据肌酐是否升高调整解救方案
+                if (creaAbnormal) {
+                    html += '<div class="action-item">提前到36小时开始亚叶酸钙解救</div>';
+                    html += '<div class="action-item">亚叶酸钙剂量: 30mg/m²</div>';
+                    html += '<div class="action-item">在44小时监测MTX浓度</div>';
+                } else {
+                    html += '<div class="action-item">按照计划在42小时开始亚叶酸钙解救</div>';
+                    html += '<div class="action-item">亚叶酸钙剂量: 至少15mg/m²</div>';
+                    html += '<div class="action-item">在44小时监测MTX浓度</div>';
+                }
+                
+                html += '<div class="action-item">继续高水化方案和乙酰唑胺利尿</div>';
+                html += '</div>';
+            } 
+            else {
+                // ≤120% 正常方案
+                html += `<div class="success">`;
+                html += `<h4>继续标准治疗</h4>`;
+                html += '<div class="action-item">恢复常规水化方案</div>';
+                html += '<div class="action-item">标准剂量亚叶酸钙解救</div>';
+                html += '<div class="action-item">按计划在44小时监测MTX浓度</div>';
+                html += '</div>';
+            }
+            
+            html += '</div>';
+            resultSection.innerHTML = html;
+        }
+        
+        // 初始化
+        resetForm();
+    </script>
+</body>
+</html>
